@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # MySQL データベース
+  mysql:
+    image: mysql:8.0
+    container_name: todo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todo_db
+      MYSQL_USER: todo_user
+      MYSQL_PASSWORD: todo_password
+      TZ: Asia/Tokyo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - todo-network
+
+  # Spring Boot アプリケーション
+  api:
+    build:
+      context: ./todo-app-server
+      dockerfile: Dockerfile
+    container_name: todo-api
+    ports:
+      - "8080:8080"   # アプリケーションポート
+      - "5005:5005"   # デバッグポート
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/todo_db
+      SPRING_DATASOURCE_USERNAME: todo_user
+      SPRING_DATASOURCE_PASSWORD: todo_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - todo-network
+
+  # Next.js フロントエンド（オプション）
+  # client:
+  #   build:
+  #     context: ./todo-app-client
+  #     dockerfile: Dockerfile
+  #   container_name: todo-client
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: http://localhost:8080
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - todo-network
+
+volumes:
+  mysql_data:
+
+networks:
+  todo-network:
+    driver: bridge
