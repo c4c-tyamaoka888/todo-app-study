@@ -4,48 +4,60 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { useCreateTodo } from "@/hooks/useTodos";
 import { todoSchema, type TodoFormData } from "@/schemas/todo";
 
 export function TodoForm() {
-  const createTodo = useCreateTodo();
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<TodoFormData>({
+  const form = useForm<TodoFormData>({
     resolver: zodResolver(todoSchema),
     defaultValues: {
       title: "",
     },
   });
 
-  const onSubmit = async (data: TodoFormData) => {
-    try {
-      await createTodo.mutateAsync(data);
-      reset();
-    } catch (error) {
-      console.error("Failed to create todo:", error);
-    }
+  const createTodo = useCreateTodo();
+
+  const onSubmit = (data: TodoFormData) => {
+    createTodo.mutate(data, {
+      onSuccess: () => {
+        form.reset({ title: "" });
+      },
+      onError: (error) => {
+        console.error("Failed to create todo:", error);
+      },
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
-      <div className="flex-1">
-        <Input
-          placeholder="新しいタスクを入力..."
-          {...register("title")}
-          disabled={isSubmitting}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-2">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormControl>
+                <Input
+                  placeholder="新しいタスクを入力..."
+                  disabled={createTodo.isPending}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.title && (
-          <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
-        )}
-      </div>
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "追加中..." : "追加"}
-      </Button>
-    </form>
+        <Button type="submit" disabled={createTodo.isPending}>
+          {createTodo.isPending ? "追加中..." : "追加"}
+        </Button>
+      </form>
+    </Form>
   );
 }
