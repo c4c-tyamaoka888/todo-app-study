@@ -1,3 +1,7 @@
+-- 文字コード設定
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 -- Todoテーブル作成
 CREATE TABLE IF NOT EXISTS todos (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

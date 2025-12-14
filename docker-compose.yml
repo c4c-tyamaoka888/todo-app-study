@@ -3,6 +3,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: todo-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: todo_db
@@ -33,7 +34,7 @@ services:
       - "5005:5005"   # デバッグポート
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/todo_db
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/todo_db?useUnicode=true&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: todo_user
       SPRING_DATASOURCE_PASSWORD: todo_password
     depends_on:
